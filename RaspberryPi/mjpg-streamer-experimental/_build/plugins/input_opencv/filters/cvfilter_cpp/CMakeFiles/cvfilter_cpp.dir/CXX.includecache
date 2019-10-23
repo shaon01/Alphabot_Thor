@@ -1,0 +1,12 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/mr_aweso_me/Documents/Alphabot_Thor/RaspberryPi/mjpg-streamer-experimental/plugins/input_opencv/filters/cvfilter_cpp/filter_cpp.cpp
+opencv2/opencv.hpp
+/home/mr_aweso_me/Documents/Alphabot_Thor/RaspberryPi/mjpg-streamer-experimental/plugins/input_opencv/filters/cvfilter_cpp/opencv2/opencv.hpp
+
