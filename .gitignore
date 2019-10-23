@@ -15,9 +15,9 @@
 __pycache__
 *.pyc
 
-#exclude build and mjpg streamer
+#exclude build and mjpg
 RaspberryPi/mjpg-streamer-experimental/mjpg_streamer
-RaspberryPi/mjpg-streamer-experimental/_build/*
+RaspberryPi/mjpg-streamer-experimental/_build
 #deb and pkg files
 *.deb
 _pkg/
