@@ -58,7 +58,7 @@ def cmd():
 def camera():
     lastpath = os.path.abspath(os.path.join(os.getcwd(), "../"))
     print("lastpath = %s" %lastpath)
-    campath = lastpath + '/mjpg-streamer/mjpg-streamer-experimental/'
+    campath = lastpath + '/mjpg-streamer-experimental/'
     print("campath = %s" %campath)
     os.system(campath  + './mjpg_streamer -i "' + campath + './input_uvc.so" -o "' + campath + './output_http.so -w ' + campath + './www"') 
 

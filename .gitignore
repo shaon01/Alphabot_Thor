@@ -15,8 +15,9 @@
 __pycache__
 *.pyc
 
-/mjpg-streamer-experimental/mjpg_streamer
-/mjpg-streamer-experimental/_build
+/Alphabot_Thor/RaspberryPi/mjpg-streamer-experimental/mjpg_streamer
+/Alphabot_Thor/RaspberryPi/mjpg-streamer-experimental/_build
 *.deb
 _pkg/
 doc/
+RaspberryPi/mjpg-streamer-experimental/_build/install_manifest.txt
