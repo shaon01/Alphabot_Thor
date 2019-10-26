@@ -40,7 +40,8 @@ def cmd():
     print('Serial command to arduino direction:', speed)
 
     try:
-        ser.write(bytes(robotDirection.encode("ascii"))) 
+        if robotDirection in arduinoComnd:
+            ser.write(bytes(robotDirection.encode("ascii"))) 
         if speed != None:
             #templet speed command == {"Car":"SetSpeed","Value":[250,200]}
             speedVal = '{"Car":"SetSpeed","Value":[' + str(speed) +','+str(speed) + ']}'
@@ -48,8 +49,8 @@ def cmd():
             #ser.write(bytes(speedVal.encode("ascii"))) 
 
         pass
-    except expression as identifier:
-        print ('Serial send error :', identifier)
+    except :
+        print ('Serial send error :')
         pass
 
 def camera():
