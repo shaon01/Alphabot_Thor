@@ -10,9 +10,7 @@ arduinoComnd = {'stop'      :'{"Car":"Stop"}',
                 'forward'   :'{"Car":"Forward"}',
                 'backward'  :'{"Car":"Backward"}',
                 'turnleft'  :'{"Car":"Left"}',
-                'turnright' :'{"Car":"Right"}',
-                'speed'     :'{"Car":"SetSpeed","Value":[250,250]}'
-
+                'turnright' :'{"Car":"Right"}'
                 }
 
 
@@ -32,21 +30,22 @@ def server_fonts(filename):
 	
 @post("/cmd")
 def cmd():
-    code = request.body.read().decode()
+    direction = request.body.read().decode()
     speed = request.POST.get('speed')
-    robotDirection = arduinoComnd.get(code)
-    print('Recived serial command   :', code)
+    robotDirection = arduinoComnd.get(direction)
+    print('Recived serial command   :', direction)
     print('Serial command to arduino direction:', robotDirection)
-    print('Serial command to arduino direction:', speed)
+    print('Serial command to arduino speed:', speed)
 
     try:
-        if robotDirection in arduinoComnd:
+        if direction in arduinoComnd:
             ser.write(bytes(robotDirection.encode("ascii"))) 
+			
         if speed != None:
             #templet speed command == {"Car":"SetSpeed","Value":[250,200]}
-            speedVal = '{"Car":"SetSpeed","Value":[' + str(speed) +','+str(speed) + ']}'
-            print ('got speed val: ',speedVal)
-            #ser.write(bytes(speedVal.encode("ascii"))) 
+            speedVal = '{"Car":"SetSpeed","Value":[' + str(speed) +','+ str(speed) + ']}'
+            print ('sending speed value: ',speedVal)
+            ser.write(bytes(speedVal.encode("ascii"))) 
 
         pass
     except :
