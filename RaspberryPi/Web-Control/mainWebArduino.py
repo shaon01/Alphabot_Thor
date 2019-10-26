@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
 from bottle import get,post,run,route,request,template,static_file
-from AlphaBot import AlphaBot
 import threading
 import socket #ip
 import os,sys
@@ -12,11 +11,11 @@ arduinoComnd = {'stop'      :'{"Car":"Stop"}',
                 'backward'  :'{"Car":"Backward"}',
                 'turnleft'  :'{"Car":"Left"}',
                 'turnright' :'{"Car":"Right"}',
-                'speed'     :''
+                'speed'     :'{"Car":"SetSpeed","Value":[250,250]}'
 
                 }
 
-car = AlphaBot()
+
 ser=serial.Serial("/dev/ttyAMA0",115200)  
 
 @get("/")
@@ -35,11 +34,19 @@ def server_fonts(filename):
 def cmd():
     code = request.body.read().decode()
     speed = request.POST.get('speed')
-    serialCmnd = arduinoComnd.get(code)
+    robotDirection = arduinoComnd.get(code)
     print('Recived serial command   :', code)
-    print('Serial command to arduino:', serialCmnd)
+    print('Serial command to arduino direction:', robotDirection)
+    print('Serial command to arduino direction:', speed)
+
     try:
-        ser.write(bytes(serialCmnd.encode("ascii"))) 
+        ser.write(bytes(robotDirection.encode("ascii"))) 
+        if speed != None:
+            #templet speed command == {"Car":"SetSpeed","Value":[250,200]}
+            speedVal = '{"Car":"SetSpeed","Value":[' + str(speed) +','+str(speed) + ']}'
+            print ('got speed val: ',speedVal)
+            #ser.write(bytes(speedVal.encode("ascii"))) 
+
         pass
     except expression as identifier:
         print ('Serial send error :', identifier)
