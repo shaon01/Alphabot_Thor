@@ -91,9 +91,7 @@ def detect_motion(frameCount):
 		# lock
 		with lock:
 			outputFrame = frame.copy()
-
-
-#called from the video_feed(), gets the outputFrame which is handler of global image
+		
 def generate():
 	# grab global references to the output frame and lock variables
 	global outputFrame, lock
@@ -118,7 +116,6 @@ def generate():
 		yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + 
 			bytearray(encodedImage) + b'\r\n')
 
-#this is the function feed to to web, so leave it as it is for now
 @app.route("/video_feed")
 def video_feed():
 	# return the response generated along with the specific media

@@ -1,5 +1,0 @@
-{
-    "board": "arduino:avr:uno",
-    "port": "/dev/ttyS4",
-    "sketch": "arduino/AlphaBot/examples/E11_mjpg-AlphaBot/E11_mjpg-AlphaBot.ino"
-}
