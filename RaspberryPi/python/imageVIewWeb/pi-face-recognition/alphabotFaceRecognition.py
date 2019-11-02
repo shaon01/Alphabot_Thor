@@ -63,7 +63,6 @@ class alphabotFaceRecognition:
             # lock
             with self.lock:
                 self.viweingImage = self.frame.copy()
-                print('locked and updated image')
             
             # display the image to our screen
             cv2.imshow("Frame", self.frame)
@@ -77,6 +76,7 @@ class alphabotFaceRecognition:
             self.fps.update()
 
         self.fps.stop()
+        cv2.destroyAllWindows()
 
 
         
@@ -106,7 +106,7 @@ class alphabotFaceRecognition:
                 for i in matchedIdxs:
                     name = self.data["names"][i]
                     counts[name] = counts.get(name, 0) + 1
-                    print ('Found some one: '. counts[name])
+                    print ('Found some one: ',str (counts[name]))
 
                 # determine the recognized face with the largest number
                 # of votes (note: in the event of an unlikely tie Python
@@ -131,7 +131,7 @@ class alphabotFaceRecognition:
 
 
 
-
+'''
 # create an empty face for the image
 imageFrame = None
 
@@ -140,6 +140,6 @@ runIt.imageProcessMain()
 
 print("[INFO] elasped time: {:.2f}".format(runIt.fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(runIt.fps.fps()))
-
+'''
 
 
