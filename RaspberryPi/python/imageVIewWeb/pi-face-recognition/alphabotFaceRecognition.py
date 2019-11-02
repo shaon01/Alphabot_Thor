@@ -2,6 +2,7 @@
 from imutils.video import VideoStream
 from imutils.video import FPS
 import face_recognition
+import threading
 import argparse
 import imutils
 import pickle
@@ -11,14 +12,15 @@ import cv2
 
 #main calss for facial recognition for alphabot
 class alphabotFaceRecognition:
-    def __init__(self):
+    def __init__(self, imageFrame):
         print("[INFO] loading encodings + face detector...")
         #classifer location of haarcascade
         classifierXML = 'haarcascade_frontalface_default.xml'
         self.detector = cv2.CascadeClassifier(classifierXML)
         # loading database of the recognized faces
         self.data = pickle.loads(open("encodings.pickle", "rb").read())
-
+        self.viweingImage = imageFrame
+        self.lock = threading.Lock()
 
         # initialize the video stream and allow the camera sensor to warm up
         print("[INFO] starting video stream...")
@@ -57,6 +59,12 @@ class alphabotFaceRecognition:
             names = self.identifyFaces(encodings)
             self.drawBoxOnFaces(boxes,names)
 
+    		# acquire the lock, set the output frame, and release the
+            # lock
+            with self.lock:
+                self.viweingImage = self.frame.copy()
+                print('locked and updated image')
+            
             # display the image to our screen
             cv2.imshow("Frame", self.frame)
             key = cv2.waitKey(1) & 0xFF
@@ -69,9 +77,9 @@ class alphabotFaceRecognition:
             self.fps.update()
 
         self.fps.stop()
-        self.vs.stop()
 
 
+        
 
     #this function dig through all the detected faces and try to recognize them from the data base
     #this function input is detected faces  and return identified faces
@@ -98,6 +106,7 @@ class alphabotFaceRecognition:
                 for i in matchedIdxs:
                     name = self.data["names"][i]
                     counts[name] = counts.get(name, 0) + 1
+                    print ('Found some one: '. counts[name])
 
                 # determine the recognized face with the largest number
                 # of votes (note: in the event of an unlikely tie Python
@@ -122,11 +131,15 @@ class alphabotFaceRecognition:
 
 
 
-runIt = alphabotFaceRecognition()
+
+# create an empty face for the image
+imageFrame = None
+
+runIt = alphabotFaceRecognition(imageFrame)
 runIt.imageProcessMain()
 
 print("[INFO] elasped time: {:.2f}".format(runIt.fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(runIt.fps.fps()))
 
-# do a bit of cleanup
-cv2.destroyAllWindows()
+
+
