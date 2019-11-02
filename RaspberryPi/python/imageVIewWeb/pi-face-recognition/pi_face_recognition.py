@@ -11,19 +11,16 @@ import pickle
 import time
 import cv2
 
-# construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-c", "--cascade", required=True,
-	help = "path to where the face cascade resides")
-ap.add_argument("-e", "--encodings", required=True,
-	help="path to serialized db of facial encodings")
-args = vars(ap.parse_args())
-
 # load the known faces and embeddings along with OpenCV's Haar
 # cascade for face detection
+#classifer location of haarcascade
+classifierXML = 'haarcascade_frontalface_default.xml'
+
 print("[INFO] loading encodings + face detector...")
-data = pickle.loads(open(args["encodings"], "rb").read())
-detector = cv2.CascadeClassifier(args["cascade"])
+detector = cv2.CascadeClassifier(classifierXML)
+# loading database of the recognized faces
+data = pickle.loads(open("encodings.pickle", "rb").read())
+
 
 # initialize the video stream and allow the camera sensor to warm up
 print("[INFO] starting video stream...")
