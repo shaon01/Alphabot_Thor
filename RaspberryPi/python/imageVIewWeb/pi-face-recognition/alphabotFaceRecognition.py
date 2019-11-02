@@ -29,9 +29,6 @@ class alphabotFaceRecognition:
         # self.vs = VideoStream(usePiCamera=True).start()
         time.sleep(2.0)
 
-        # start the FPS counter
-        self.fps = FPS().start()
-
     #It is the main function of the class which calls other functions. this method is to get an image and find faces, 
     def imageProcessMain(self):
         while True:
@@ -65,6 +62,7 @@ class alphabotFaceRecognition:
             with self.lock:
                 self.viweingImage = self.frame.copy()
             
+            '''
             # display the image to our screen
             cv2.imshow("Frame", self.frame)
             key = cv2.waitKey(1) & 0xFF
@@ -73,14 +71,9 @@ class alphabotFaceRecognition:
             if key == ord("q"):
                 break
 
-            # update the FPS counter
-            self.fps.update()
-
-        self.fps.stop()
+            '''
         cv2.destroyAllWindows()
 
-
-        
 
     #this function dig through all the detected faces and try to recognize them from the data base
     #this function input is detected faces  and return identified faces
@@ -107,7 +100,6 @@ class alphabotFaceRecognition:
                 for i in matchedIdxs:
                     name = self.data["names"][i]
                     counts[name] = counts.get(name, 0) + 1
-                    print ('Found some one: ',str (counts[name]))
 
                 # determine the recognized face with the largest number
                 # of votes (note: in the event of an unlikely tie Python

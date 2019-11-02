@@ -23,6 +23,7 @@ lock = threading.Lock()
 # initialize a flask object
 app = Flask(__name__)
 
+# initializing the facial recognition class
 runIt = alphabotFaceRecognition(lock)
 
 
@@ -40,6 +41,7 @@ def generate():
 	while True:
 		# wait until the lock is acquired
 		with lock:
+			# getting the image from the alphabot class
 			outputFrame = runIt.viweingImage
 			# check if the output frame is available, otherwise skip
 			# the iteration of the loop
