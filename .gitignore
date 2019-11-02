@@ -23,5 +23,7 @@ RaspberryPi/mjpg-streamer-experimental/_build/*
 _pkg/
 doc/
 
-RaspberryPi/python/imageVIewWeb/pi-face-recognition/dataset/
+#RaspberryPi/python/imageVIewWeb/pi-face-recognition/dataset/
+
+RaspberryPi/python/face_recognition_web/dataset/
 
