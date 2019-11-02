@@ -12,15 +12,16 @@ import cv2
 
 #main calss for facial recognition for alphabot
 class alphabotFaceRecognition:
-    def __init__(self, imageFrame):
+
+    def __init__(self,lock):
         print("[INFO] loading encodings + face detector...")
         #classifer location of haarcascade
         classifierXML = 'haarcascade_frontalface_default.xml'
         self.detector = cv2.CascadeClassifier(classifierXML)
         # loading database of the recognized faces
         self.data = pickle.loads(open("encodings.pickle", "rb").read())
-        self.viweingImage = imageFrame
-        self.lock = threading.Lock()
+        self.viweingImage = None
+        self.lock = lock
 
         # initialize the video stream and allow the camera sensor to warm up
         print("[INFO] starting video stream...")

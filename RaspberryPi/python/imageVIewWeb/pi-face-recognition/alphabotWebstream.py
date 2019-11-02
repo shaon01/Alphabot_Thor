@@ -23,29 +23,24 @@ lock = threading.Lock()
 # initialize a flask object
 app = Flask(__name__)
 
+runIt = alphabotFaceRecognition(lock)
+
+
 @app.route("/")
 def index():
 	# return the rendered template
 	return render_template("index.html")
 
-@app.route('/<filename>')
-def server_static(filename):
-    return filename(filename, root='./')
-
-@app.route('/fonts/<filename>')
-def server_fonts(filename):
-    return filename(filename, root='./fonts/')
-
-
 		
 def generate():
 	# grab global references to the output frame and lock variables
 	global outputFrame, lock
-
+	
 	# loop over frames from the output stream
 	while True:
 		# wait until the lock is acquired
 		with lock:
+			outputFrame = runIt.viweingImage
 			# check if the output frame is available, otherwise skip
 			# the iteration of the loop
 			if outputFrame is None:
@@ -80,13 +75,13 @@ if __name__ == '__main__':
 	ap.add_argument("-f", "--frame-count", type=int, default=32,
 		help="# of frames used to construct the background model")
 	args = vars(ap.parse_args())
-	runIt = alphabotFaceRecognition(outputFrame)
-	
+
 	# start a thread that will perform motion detection
 	t = threading.Thread(target=runIt.imageProcessMain)
 	t.daemon = True
 	t.start()
-	
+
 	# start the flask app
 	app.run(host=args["ip"], port=args["port"], debug=True,
 		threaded=True, use_reloader=False)
+
