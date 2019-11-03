@@ -25,20 +25,28 @@ class alphabotFaceRecognition:
         self.lock = lock
         self.findPerson =  person
         #initial value for the camera base
-        self.servoBaseValue = 140
-        self.serialComm=serial.Serial("/dev/ttyUSB1",115200)
+        self.servoProperties = {'servoHeadVal'  :90,
+                                'servoBaseVal'  :90,
+                                'servoMaxVal'   :170,
+                                'servoMinVal'   :20,
+                                'servoDir'      :'toMax' #other value is toMin
+
+                            }
+        
 
         # initialize the video stream and allow the camera sensor to warm up
         print("[INFO] starting video stream...")
         #camera and serial comm for PC
-        self.vs = VideoStream(src=0).start()
-        self.serialComm=serial.Serial("/dev/ttyUSB1",115200)
+        #self.vs = VideoStream(src=0).start()
+        #self.serialComm=serial.Serial("/dev/ttyUSB0",115200)
 
         #uncomment this line for raspberry pi
-        #self.vs = VideoStream(usePiCamera=True).start()
-        #self.serialComm=serial.Serial("/dev/ttyUSB1",115200)
-
+        self.vs = VideoStream(usePiCamera=True).start()
+        self.serialComm=serial.Serial("/dev/ttyUSB1",115200)
+        
         time.sleep(2.0)
+        #setting up servo initially
+        self.initialServoSetup()
 
     #It is the main function of the class which calls other functions. this method is to get an image and find faces, 
     def imageProcessMain(self):
@@ -140,13 +148,34 @@ class alphabotFaceRecognition:
 
     def scanForPerson(self):
         #{"Servo":"Servo1","Angle":180}
-        if self.servoBaseValue >= 180 or self.servoBaseValue <= 18:
-            self.servoBaseValue = 20
-        servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoBaseValue)+'}'
-        print ('sending speed value: ',servoBase)
+        #change direction of camera movement
+        if self.servoProperties.get('servoBaseVal') >= self.servoProperties.get('servoMaxVal'):
+            self.servoProperties['servoDir'] = 'toMin' #change direction toMin
+        if self.servoProperties.get('servoBaseVal') <= self.servoProperties.get('servoMinVal'):
+            self.servoProperties['servoDir'] = 'toMax' #change direction toMin
+
+        servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoProperties.get('servoBaseVal'))+'}'
+        #print ('sending speed value: ',servoBase)
         self.serialComm.write(bytes(servoBase.encode("ascii"))) 
-        self.servoBaseValue = self.servoBaseValue + 5
+        
+        #update curent camera value
+        if self.servoProperties.get('servoDir') == 'toMax':
+            self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') + 5 
+        else:
+            self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') - 5 
+
         time.sleep(0.5)
+
+    def initialServoSetup(self):
+        
+        servoBase = '{"Servo":"Servo1","Angle":'+str(90)+'}'
+        servoHead = '{"Servo":"Servo2","Angle":'+str(50)+'}'
+
+        self.serialComm.write(bytes(servoHead.encode("ascii"))) 
+        time.sleep(0.2)
+        self.serialComm.write(bytes(servoBase.encode("ascii"))) 
+        
+
 
     
 
@@ -156,7 +185,7 @@ class alphabotFaceRecognition:
 # create an empty face for the image
 
 lock = threading.Lock()
-namesss = 'golam'
+namesss = 'golams'
 runIt = alphabotFaceRecognition(lock,namesss)
 runIt.imageProcessMain()
 
