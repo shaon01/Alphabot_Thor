@@ -23,11 +23,12 @@ class alphabotFaceRecognition:
         self.data = pickle.loads(open("encodings.pickle", "rb").read())
         self.viweingImage = None
         self.lock = lock
-        self.findPerson =  person
+        self.targetPerson =  person
+        self.currentPerson = [] #global list of currently detected person
         #initial value for the camera base
         self.servoProperties = {'servoHeadVal'  :90,
                                 'servoBaseVal'  :90,
-                                'servoMaxVal'   :170,
+                                'servoMaxVal'   :160,
                                 'servoMinVal'   :20,
                                 'servoDir'      :'toMax' #other value is toMin
 
@@ -73,13 +74,8 @@ class alphabotFaceRecognition:
 
             # compute the facial embeddings for each face bounding box
             encodings = face_recognition.face_encodings(rgb, boxes)
-            names = self.identifyFaces(encodings)
-            self.drawBoxOnFaces(boxes,names)
-            
-            #try to find a person, if not start scanning
-            if self.findPerson not in names:
-                #print('I have not found it')
-                self.scanForPerson()
+            self.currentPerson = self.identifyFaces(encodings)
+            self.drawBoxOnFaces(boxes,self.currentPerson)
 
     		# acquire the lock, set the output frame, and release the
             # lock
@@ -149,22 +145,25 @@ class alphabotFaceRecognition:
     def scanForPerson(self):
         #{"Servo":"Servo1","Angle":180}
         #change direction of camera movement
-        if self.servoProperties.get('servoBaseVal') >= self.servoProperties.get('servoMaxVal'):
-            self.servoProperties['servoDir'] = 'toMin' #change direction toMin
-        if self.servoProperties.get('servoBaseVal') <= self.servoProperties.get('servoMinVal'):
-            self.servoProperties['servoDir'] = 'toMax' #change direction toMin
+        while True:
+            if self.targetPerson not in self.currentPerson:
+                if self.servoProperties.get('servoBaseVal') >= self.servoProperties.get('servoMaxVal'):
+                    self.servoProperties['servoDir'] = 'toMin' #change direction toMin
+                if self.servoProperties.get('servoBaseVal') <= self.servoProperties.get('servoMinVal'):
+                    self.servoProperties['servoDir'] = 'toMax' #change direction toMin
 
-        servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoProperties.get('servoBaseVal'))+'}'
-        #print ('sending speed value: ',servoBase)
-        self.serialComm.write(bytes(servoBase.encode("ascii"))) 
-        
-        #update curent camera value
-        if self.servoProperties.get('servoDir') == 'toMax':
-            self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') + 5 
-        else:
-            self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') - 5 
+                servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoProperties.get('servoBaseVal'))+'}'
+                #print ('sending speed value: ',servoBase)
+                self.serialComm.write(bytes(servoBase.encode("ascii"))) 
+                #print ('finisehed sending ')
+                
+                #update curent camera value
+                if self.servoProperties.get('servoDir') == 'toMax':
+                    self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') + 3 
+                else:
+                    self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') - 3 
 
-        time.sleep(0.5)
+                time.sleep(0.5)
 
     def initialServoSetup(self):
         

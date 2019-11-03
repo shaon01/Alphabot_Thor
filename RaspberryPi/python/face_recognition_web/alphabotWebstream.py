@@ -79,9 +79,10 @@ if __name__ == '__main__':
 	args = vars(ap.parse_args())
 
 	# start a thread that will perform motion detection
-	t = threading.Thread(target=runIt.imageProcessMain)
-	t.daemon = True
-	t.start()
+	imageProcess 	= threading.Thread(target=runIt.imageProcessMain,daemon=True)
+	scanPerson		= threading.Thread(target=runIt.scanForPerson,daemon=True)
+	imageProcess.start()
+	scanPerson.start()
 
 	# start the flask app
 	app.run(host=args["ip"], port=args["port"], debug=True,
