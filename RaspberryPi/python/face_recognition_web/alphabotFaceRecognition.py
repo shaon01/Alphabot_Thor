@@ -42,7 +42,7 @@ class alphabotFaceRecognition:
 
         #uncomment this line for raspberry pi
         self.vs = VideoStream(usePiCamera=True).start()
-        self.serialComm=serial.Serial("/dev/ttyUSB1",115200)
+        self.serialComm=serial.Serial("/dev/ttyS0",115200)
         
         time.sleep(2.0)
         #setting up servo initially
@@ -78,7 +78,7 @@ class alphabotFaceRecognition:
             
             #try to find a person, if not start scanning
             if self.findPerson not in names:
-                print('I have not found it')
+                #print('I have not found it')
                 self.scanForPerson()
 
     		# acquire the lock, set the output frame, and release the
@@ -86,7 +86,7 @@ class alphabotFaceRecognition:
             with self.lock:
                 self.viweingImage = self.frame.copy()
             
-            
+            '''
             # display the image to our screen
             cv2.imshow("Frame", self.frame)
             key = cv2.waitKey(1) & 0xFF
@@ -95,7 +95,7 @@ class alphabotFaceRecognition:
             if key == ord("q"):
                 break
 
-            
+            '''
         cv2.destroyAllWindows()
 
 
@@ -169,7 +169,7 @@ class alphabotFaceRecognition:
     def initialServoSetup(self):
         
         servoBase = '{"Servo":"Servo1","Angle":'+str(90)+'}'
-        servoHead = '{"Servo":"Servo2","Angle":'+str(50)+'}'
+        servoHead = '{"Servo":"Servo2","Angle":'+str(80)+'}'
 
         self.serialComm.write(bytes(servoHead.encode("ascii"))) 
         time.sleep(0.2)
@@ -179,7 +179,7 @@ class alphabotFaceRecognition:
 
     
 
-
+'''
 
 
 # create an empty face for the image
@@ -188,7 +188,7 @@ lock = threading.Lock()
 namesss = 'golams'
 runIt = alphabotFaceRecognition(lock,namesss)
 runIt.imageProcessMain()
-
+'''
 
 
 

@@ -24,7 +24,7 @@ lock = threading.Lock()
 app = Flask(__name__)
 
 # initializing the facial recognition class
-runIt = alphabotFaceRecognition(lock)
+runIt = alphabotFaceRecognition(lock,'golam')
 
 
 @app.route("/")
