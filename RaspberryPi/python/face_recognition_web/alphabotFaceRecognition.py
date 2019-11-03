@@ -33,6 +33,14 @@ class alphabotFaceRecognition:
                                 'servoDir'      :'toMax' #other value is toMin
 
                             }
+
+        #arduino driving command
+        self.arduinoComnd = {'stop'      :'{"Car":"Stop"}',
+                            'forward'   :'{"Car":"Forward"}',
+                            'backward'  :'{"Car":"Backward"}',
+                            'turnleft'  :'{"Car":"Left"}',
+                            'turnright' :'{"Car":"Right"}'
+                        }
         
 
         # initialize the video stream and allow the camera sensor to warm up
@@ -90,8 +98,8 @@ class alphabotFaceRecognition:
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
                 break
-
             '''
+            
         cv2.destroyAllWindows()
 
 
@@ -142,6 +150,7 @@ class alphabotFaceRecognition:
             cv2.putText(self.frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
                 0.75, (0, 255, 0), 2)
 
+    #this function is run on a different thread to simultiniously move the camera to find the desired person
     def scanForPerson(self):
         #{"Servo":"Servo1","Angle":180}
         #change direction of camera movement
@@ -165,6 +174,7 @@ class alphabotFaceRecognition:
 
                 time.sleep(0.5)
 
+    #this function runs only initially to set the servo at good position
     def initialServoSetup(self):
         
         servoBase = '{"Servo":"Servo1","Angle":'+str(90)+'}'
@@ -172,22 +182,51 @@ class alphabotFaceRecognition:
 
         self.serialComm.write(bytes(servoHead.encode("ascii"))) 
         time.sleep(0.2)
-        self.serialComm.write(bytes(servoBase.encode("ascii"))) 
-        
+        self.serialComm.write(bytes(servoBase.encode("ascii")))
+
+    def driveToPerson(self):
+        while True:
+            if self.targetPerson in self.currentPerson:
+                #check if the robot is aligined with the person by checking the servo position
+                servoPostion = int(self.servoProperties.get('servoBaseVal'))
+                if servoPostion not in range(80,100):
+                    print ('trying to turn')
+                    
+                    delayTime = (abs(servoPostion - 90))/20 # deviding the value by 10 now need to adjust
+                    if servoPostion < 90:
+                        self.serialComm.write(bytes(self.arduinoComnd.get('turnleft').encode("ascii")))
+                    else:
+                        self.serialComm.write(bytes(self.arduinoComnd.get('turnright').encode("ascii")))
+
+                    time.sleep(delayTime)
+                    self.serialComm.write(bytes(self.arduinoComnd.get('stop').encode("ascii")))
+                    #Resetting camera positon 
+                    self.servoProperties['servoBaseVal'] = 90
+                    servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoProperties.get('servoBaseVal'))+'}'
+                    #print ('sending speed value: ',servoBase)
+                    self.serialComm.write(bytes(servoBase.encode("ascii"))) 
+                #drive forward if the person is found 
 
 
     
 
-'''
 
+'''
 
 # create an empty face for the image
 
 lock = threading.Lock()
-namesss = 'golams'
+namesss = 'golam'
 runIt = alphabotFaceRecognition(lock,namesss)
-runIt.imageProcessMain()
+time.sleep(0.2)
+imageProcess 	= threading.Thread(target=runIt.imageProcessMain,daemon=True)
+#imageProcess.start()
+#scanPerson		= threading.Thread(target=runIt.scanForPerson,daemon=True)
+#scanPerson.start()
+#driveToPerson   = threading.Thread(target=runIt.driveToPerson,daemon=True)
+#driveToPerson.start()
 '''
+
 
 
 
