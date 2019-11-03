@@ -6,6 +6,7 @@ import threading
 import argparse
 import imutils
 import pickle
+import serial
 import time
 import cv2
 
@@ -13,7 +14,7 @@ import cv2
 #main calss for facial recognition for alphabot
 class alphabotFaceRecognition:
 
-    def __init__(self,lock):
+    def __init__(self,lock, person):
         print("[INFO] loading encodings + face detector...")
         #classifer location of haarcascade
         classifierXML = 'haarcascade_frontalface_default.xml'
@@ -22,11 +23,21 @@ class alphabotFaceRecognition:
         self.data = pickle.loads(open("encodings.pickle", "rb").read())
         self.viweingImage = None
         self.lock = lock
+        self.findPerson =  person
+        #initial value for the camera base
+        self.servoBaseValue = 140
+        self.serialComm=serial.Serial("/dev/ttyUSB1",115200)
 
         # initialize the video stream and allow the camera sensor to warm up
         print("[INFO] starting video stream...")
-        self.vs = VideoStream(src=1).start()
-        # self.vs = VideoStream(usePiCamera=True).start()
+        #camera and serial comm for PC
+        self.vs = VideoStream(src=0).start()
+        self.serialComm=serial.Serial("/dev/ttyUSB1",115200)
+
+        #uncomment this line for raspberry pi
+        #self.vs = VideoStream(usePiCamera=True).start()
+        #self.serialComm=serial.Serial("/dev/ttyUSB1",115200)
+
         time.sleep(2.0)
 
     #It is the main function of the class which calls other functions. this method is to get an image and find faces, 
@@ -56,13 +67,18 @@ class alphabotFaceRecognition:
             encodings = face_recognition.face_encodings(rgb, boxes)
             names = self.identifyFaces(encodings)
             self.drawBoxOnFaces(boxes,names)
+            
+            #try to find a person, if not start scanning
+            if self.findPerson not in names:
+                print('I have not found it')
+                self.scanForPerson()
 
     		# acquire the lock, set the output frame, and release the
             # lock
             with self.lock:
                 self.viweingImage = self.frame.copy()
             
-            '''
+            
             # display the image to our screen
             cv2.imshow("Frame", self.frame)
             key = cv2.waitKey(1) & 0xFF
@@ -71,7 +87,7 @@ class alphabotFaceRecognition:
             if key == ord("q"):
                 break
 
-            '''
+            
         cv2.destroyAllWindows()
 
 
@@ -122,17 +138,28 @@ class alphabotFaceRecognition:
             cv2.putText(self.frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
                 0.75, (0, 255, 0), 2)
 
+    def scanForPerson(self):
+        #{"Servo":"Servo1","Angle":180}
+        if self.servoBaseValue >= 180 or self.servoBaseValue <= 18:
+            self.servoBaseValue = 20
+        servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoBaseValue)+'}'
+        print ('sending speed value: ',servoBase)
+        self.serialComm.write(bytes(servoBase.encode("ascii"))) 
+        self.servoBaseValue = self.servoBaseValue + 5
+        time.sleep(0.5)
+
+    
 
 
-'''
+
+
 # create an empty face for the image
-imageFrame = None
 
-runIt = alphabotFaceRecognition(imageFrame)
+lock = threading.Lock()
+namesss = 'golam'
+runIt = alphabotFaceRecognition(lock,namesss)
 runIt.imageProcessMain()
 
-print("[INFO] elasped time: {:.2f}".format(runIt.fps.elapsed()))
-print("[INFO] approx. FPS: {:.2f}".format(runIt.fps.fps()))
-'''
+
 
 
