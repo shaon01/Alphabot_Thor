@@ -26,4 +26,5 @@ doc/
 #RaspberryPi/python/imageVIewWeb/pi-face-recognition/dataset/
 
 RaspberryPi/python/face_recognition_web/dataset/
+.vscode/
 
