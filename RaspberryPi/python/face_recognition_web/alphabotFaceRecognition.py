@@ -89,6 +89,9 @@ class alphabotFaceRecognition:
             # lock
             with self.lock:
                 self.viweingImage = self.frame.copy()
+            #continue scanning with camera
+            if self.targetPerson not in self.currentPerson:
+                self.scanForPerson()
             
             '''
             # display the image to our screen
@@ -99,7 +102,6 @@ class alphabotFaceRecognition:
             if key == ord("q"):
                 break
             '''
-            
         cv2.destroyAllWindows()
 
 
@@ -154,25 +156,24 @@ class alphabotFaceRecognition:
     def scanForPerson(self):
         #{"Servo":"Servo1","Angle":180}
         #change direction of camera movement
-        while True:
-            if self.targetPerson not in self.currentPerson:
-                if self.servoProperties.get('servoBaseVal') >= self.servoProperties.get('servoMaxVal'):
-                    self.servoProperties['servoDir'] = 'toMin' #change direction toMin
-                if self.servoProperties.get('servoBaseVal') <= self.servoProperties.get('servoMinVal'):
-                    self.servoProperties['servoDir'] = 'toMax' #change direction toMin
+                   
+        if self.servoProperties.get('servoBaseVal') >= self.servoProperties.get('servoMaxVal'):
+            self.servoProperties['servoDir'] = 'toMin' #change direction toMin
+        if self.servoProperties.get('servoBaseVal') <= self.servoProperties.get('servoMinVal'):
+            self.servoProperties['servoDir'] = 'toMax' #change direction toMin
 
-                servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoProperties.get('servoBaseVal'))+'}'
-                #print ('sending speed value: ',servoBase)
-                self.serialComm.write(bytes(servoBase.encode("ascii"))) 
-                #print ('finisehed sending ')
-                
-                #update curent camera value
-                if self.servoProperties.get('servoDir') == 'toMax':
-                    self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') + 3 
-                else:
-                    self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') - 3 
+        servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoProperties.get('servoBaseVal'))+'}'
+        #print ('sending speed value: ',servoBase)
+        self.serialComm.write(bytes(servoBase.encode("ascii"))) 
+        #print ('finisehed sending ')
+        
+        #update curent camera value
+        if self.servoProperties.get('servoDir') == 'toMax':
+            self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') + 3 
+        else:
+            self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') - 3 
 
-                time.sleep(0.5)
+        time.sleep(1)
 
     #this function runs only initially to set the servo at good position
     def initialServoSetup(self):
@@ -190,9 +191,9 @@ class alphabotFaceRecognition:
                 #check if the robot is aligined with the person by checking the servo position
                 servoPostion = int(self.servoProperties.get('servoBaseVal'))
                 if servoPostion not in range(80,100):
-                    print ('trying to turn')
                     
                     turnAngle = (abs(servoPostion - 90))# deviding the value by 10 now need to adjust
+                    print ('trying to turn with angle :', turnAngle)
                     if servoPostion < 90:
                         serialCommand = self.arduinoComnd.get('turnleft')+ str(turnAngle) +']}'
                         self.serialComm.write(bytes(serialCommand.encode("ascii")))

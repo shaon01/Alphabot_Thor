@@ -75,7 +75,7 @@ void setup()
 
   //setting initial servo value
   servo1.write(90);
-  servo2.write(50);
+  servo2.write(60);
 
   //set car spped
   byte initSpeed = 200;
