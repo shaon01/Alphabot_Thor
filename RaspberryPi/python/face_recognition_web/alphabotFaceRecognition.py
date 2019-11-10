@@ -55,7 +55,7 @@ class alphabotFaceRecognition:
         
         time.sleep(2.0)
         #setting up servo initially
-        self.initialServoSetup()
+        #self.initialServoSetup()
 
     #It is the main function of the class which calls other functions. this method is to get an image and find faces, 
     def imageProcessMain(self):
