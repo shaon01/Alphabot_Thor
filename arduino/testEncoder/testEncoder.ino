@@ -56,41 +56,46 @@ void encoderCounterRight()
   pulsesRight++;
 }
 
-void updateEncoder()
-{
-  if (millis() - timeold >= 1000){  /*Uptade every one second, this will be equal to reading frecuency (Hz).*/
+// void updateEncoder()
+// {
+//   if (millis() - timeold >= 1000){  /*Uptade every one second, this will be equal to reading frecuency (Hz).*/
  
-  //Don't process interrupts during calculations
-   detachInterrupt(digitalPinToInterrupt(ENCODER_LEFT));
-   detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
-   //Note that this would be 60*1000/(millis() - timeold)*pulses if the interrupt
-   //happened once per revolution
-   rpmLeft = (60 * 1000 / pulsesperturn )/ (millis() - timeold)* pulsesLeft;
-   rpmRight = (60 * 1000 / pulsesperturn )/ (millis() - timeold)* pulsesRight;
-   timeold = millis();
-   pulsesLeft = 0;
-   pulsesRight = 0;
+//   //Don't process interrupts during calculations
+//    detachInterrupt(digitalPinToInterrupt(ENCODER_LEFT));
+//    detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
+//    //Note that this would be 60*1000/(millis() - timeold)*pulses if the interrupt
+//    //happened once per revolution
+//    rpmLeft = (60 * 1000 / pulsesperturn )/ (millis() - timeold)* pulsesLeft;
+//    rpmRight = (60 * 1000 / pulsesperturn )/ (millis() - timeold)* pulsesRight;
+//    timeold = millis();
+//    pulsesLeft = 0;
+//    pulsesRight = 0;
    
-   //Write it out to serial port
-   Serial.print("RPM left = ");
-   Serial.println(rpmLeft,DEC);
-   Serial.print("RPM right = ");
-   Serial.println(rpmRight,DEC);
-   Serial.println("-------------------");
-   //Restart the interrupt processing
-   attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
-   attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
-   }
-}
+//    //Write it out to serial port
+  
+//    Serial.print("RPM left = ");
+//    Serial.println(rpmLeft,DEC);
+//    Serial.print("RPM right = ");
+//    Serial.println(rpmRight,DEC);
+//    Serial.println("-------------------");
+   
+//    //Restart the interrupt processing
+//    attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
+//    attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
+//    }
+// }
 
 void setup()
 {
   Serial.begin(115200);
   Serial.println("start!");
-  servo1.attach(9);
-  servo2.attach(10);
-  servo1.write(90);
-  servo1.write(90);
+  
+  //start servo setup
+  servo1.attach(9);   //base servo
+  servo2.attach(10);  //head 
+  //stop servo setup
+
+  //start encoder setup
   pinMode(ENCODER_LEFT, INPUT_PULLUP);
   pinMode(ENCODER_RIGHT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
@@ -100,11 +105,21 @@ void setup()
   pulsesRight = 0;
   rpmRight = 0;
   timeold = 0;
+  //stop encoder setup
+
+  //setting initial servo value
+  servo1.write(90);
+  servo2.write(80);
+
+  //set car spped
+  byte initSpeed = 200;
+  Car1.SetSpeed(initSpeed,initSpeed);
+
 }
 
 void loop()
 { 
-  updateEncoder();
+  //updateEncoder();
   while(Serial.available() > 0)
  {
    char ch = Serial.read();
@@ -150,10 +165,47 @@ void loop()
         Car1.Forward();
       else if(strcmp(Car,"Backward") == 0)   //{"Car":"Backward"}
         Car1.Backward();
+      //turning left
       else if(strcmp(Car,"Left") == 0)       //{"Car":"Left"}
-        Car1.Left();
+        {
+          long turnAngle = DecodeData["Value"][0];
+          attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
+          Car1.Left();
+          long tempCounter = 0;
+          while (tempCounter<=turnAngle)
+          {
+            detachInterrupt(digitalPinToInterrupt(ENCODER_LEFT));
+            tempCounter = pulsesRight;
+            attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
+            Serial.print("Left turn, no of pulses:");
+            Serial.println(tempCounter);
+            
+          }
+          pulsesLeft = 0;
+          Car1.Brake();
+          detachInterrupt(digitalPinToInterrupt(ENCODER_LEFT));
+        }
+      //turning Right
       else if(strcmp(Car,"Right") == 0)      //{"Car":"Right"}
-        Car1.Right();
+        {
+          long turnAngle = DecodeData["Value"][0];
+          attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
+          long tempCounter = 0;
+          Car1.Right();
+          while (tempCounter<=turnAngle)
+          {
+            detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
+            tempCounter = pulsesLeft;
+            attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
+
+            Serial.print("Right turn, no of pulses:");
+            Serial.println(tempCounter);
+            
+          }
+          pulsesRight = 0;
+          Car1.Brake();
+          detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
+        }
       else if(strcmp(Car,"SetSpeed") == 0)   //{"Car":"SetSpeed","Value":[250,200]}
       {
         byte LSpeed = DecodeData["Value"][0];
