@@ -35,11 +35,8 @@ Servo servo1;
 Servo servo2;
 
 //variables for the ENCODER_LEFT
-unsigned int rpmLeft;     // rpm reading
-volatile byte pulsesLeft;           // number of pulses
-unsigned int rpmRight;     // rpm reading 
-volatile byte pulsesRight;           // number of pulses
-unsigned long timeold; 
+volatile long pulsesLeft;           // number of pulses
+volatile long pulsesRight;           // number of pulses
 unsigned int pulsesperturn = 20;// The number of pulses per revolution
 
 
@@ -48,9 +45,11 @@ byte Num;
 
 //ISR for encoder intrrupt
 void encoderCounterLeft(){pulsesLeft++;}
-
 void encoderCounterRight(){pulsesRight++;}
 
+//forwad declaration of function
+void TurnLeftWithAngle(int turnAngle);
+void TurnRightWithAngle(int turnAngle);
 
 
 void setup()
@@ -69,10 +68,7 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
   pulsesLeft = 0;
-  rpmLeft = 0;
   pulsesRight = 0;
-  rpmRight = 0;
-  timeold = 0;
   //stop encoder setup
 
   //setting initial servo value
@@ -137,40 +133,13 @@ void loop()
       else if(strcmp(Car,"Left") == 0)       //{"Car":"Left"}
         {
           long turnAngle = DecodeData["Value"][0];
-          attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
-          Car1.Left();
-          long tempCounter = 0;
-          while (tempCounter<=turnAngle)
-          {
-            detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
-            tempCounter = pulsesRight;
-            attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
-            
-          }
-          
-          Car1.Brake();
-          detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
-          pulsesRight = 0;
+          TurnLeftWithAngle(turnAngle);
         }
       //turning Right, this will rotate left wheel so read left encoder values
       else if(strcmp(Car,"Right") == 0)      //{"Car":"Right"}
         {
           long turnAngle = DecodeData["Value"][0];
-          attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
-          long tempCounter = 0;
-          pulsesLeft = 0;
-          Car1.Right();
-          while (tempCounter<=turnAngle)
-          {
-            detachInterrupt(digitalPinToInterrupt(ENCODER_LEFT));
-            tempCounter = pulsesLeft;
-            attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
-            
-          }
-          
-          Car1.Brake();
-          detachInterrupt(digitalPinToInterrupt(ENCODER_LEFT));
-          pulsesLeft = 0;
+          TurnRightWithAngle(turnAngle);
         }
       else if(strcmp(Car,"SetSpeed") == 0)   //{"Car":"SetSpeed","Value":[250,200]}
       {
@@ -215,4 +184,49 @@ void loop()
     Started = false;
     Ended = false;
    }
+}
+
+//function to turn right. this takes a number of ticks as an input and trun the robots left wheel so 
+//it counts robots left wheel encoder
+void TurnRightWithAngle(int turnAngle)
+{
+  attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
+  long tempCounter = 0;
+  pulsesLeft = 0;
+  Car1.Right();
+  while (tempCounter<=turnAngle)
+  {
+    //detach and read the value and reattach again
+    detachInterrupt(digitalPinToInterrupt(ENCODER_LEFT));
+    tempCounter = pulsesLeft;
+    attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
+    
+  }
+  
+  Car1.Brake();
+  detachInterrupt(digitalPinToInterrupt(ENCODER_LEFT));
+  pulsesLeft = 0;
+
+}
+
+//function to turn left. this takes a number of ticks as an input and trun the robots left wheel so 
+//it counts robots right wheel encoder
+void TurnLeftWithAngle(int turnAngle)
+{
+  attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
+  Car1.Left();
+  long tempCounter = 0;
+  while (tempCounter<=turnAngle)
+  {
+    //detach and read the value and reattach again
+    detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
+    tempCounter = pulsesRight;
+    attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
+    
+  }
+  
+  Car1.Brake();
+  detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
+  pulsesRight = 0;
+
 }
