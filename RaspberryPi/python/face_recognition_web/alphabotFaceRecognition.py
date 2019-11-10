@@ -35,11 +35,11 @@ class alphabotFaceRecognition:
                             }
 
         #arduino driving command
-        self.arduinoComnd = {'stop'      :'{"Car":"Stop"}',
+        self.arduinoComnd = {'stop'     :'{"Car":"Stop"}',
                             'forward'   :'{"Car":"Forward"}',
                             'backward'  :'{"Car":"Backward"}',
-                            'turnleft'  :'{"Car":"Left"}',
-                            'turnright' :'{"Car":"Right"}'
+                            'turnleft'  :'{"Car":"Left","Value":[',
+                            'turnright' :'{"Car":"Right","Value":['
                         }
         
 
@@ -192,15 +192,14 @@ class alphabotFaceRecognition:
                 if servoPostion not in range(80,100):
                     print ('trying to turn')
                     
-                    delayTime = (abs(servoPostion - 90))/20 # deviding the value by 10 now need to adjust
+                    turnAngle = (abs(servoPostion - 90))# deviding the value by 10 now need to adjust
                     if servoPostion < 90:
-                        self.serialComm.write(bytes(self.arduinoComnd.get('turnleft').encode("ascii")))
+                        serialCommand = self.arduinoComnd.get('turnleft')+ str(turnAngle) +']}'
+                        self.serialComm.write(bytes(serialCommand.encode("ascii")))
                     else:
-                        self.serialComm.write(bytes(self.arduinoComnd.get('turnright').encode("ascii")))
-
-                    time.sleep(delayTime)
-                    self.serialComm.write(bytes(self.arduinoComnd.get('stop').encode("ascii")))
-                    #Resetting camera positon 
+                        serialCommand = self.arduinoComnd.get('turnright')+ str(turnAngle) +']}'
+                        self.serialComm.write(bytes(serialCommand.encode("ascii")))
+                    
                     self.servoProperties['servoBaseVal'] = 90
                     servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoProperties.get('servoBaseVal'))+'}'
                     #print ('sending speed value: ',servoBase)
