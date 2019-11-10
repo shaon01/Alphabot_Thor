@@ -20,6 +20,7 @@ EN: www.waveshare.com/wiki/AlphaBot
 #include "AlphaBot.h"
 #include "ArduinoJson.h"
 #include<Servo.h>
+#include <math.h>
 
 #define START '{'
 #define END '}'
@@ -50,6 +51,7 @@ void encoderCounterRight(){pulsesRight++;}
 //forwad declaration of function
 void TurnLeftWithAngle(int turnAngle);
 void TurnRightWithAngle(int turnAngle);
+int AngleToTicks(int angle);
 
 
 void setup()
@@ -190,6 +192,7 @@ void loop()
 //it counts robots left wheel encoder
 void TurnRightWithAngle(int turnAngle)
 {
+  turnAngle = AngleToTicks(turnAngle);
   attachInterrupt(digitalPinToInterrupt(ENCODER_LEFT), encoderCounterLeft, CHANGE);
   long tempCounter = 0;
   pulsesLeft = 0;
@@ -213,6 +216,7 @@ void TurnRightWithAngle(int turnAngle)
 //it counts robots right wheel encoder
 void TurnLeftWithAngle(int turnAngle)
 {
+  turnAngle = AngleToTicks(turnAngle);
   attachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT), encoderCounterRight, CHANGE);
   Car1.Left();
   long tempCounter = 0;
@@ -229,4 +233,22 @@ void TurnLeftWithAngle(int turnAngle)
   detachInterrupt(digitalPinToInterrupt(ENCODER_RIGHT));
   pulsesRight = 0;
 
+}
+
+int AngleToTicks(int angle)
+{
+
+  /* equation for calculatin angle to ticks
+  no of encoder ticks =20
+  wheel radius,rw        =3.15cm
+  wheel base for one wheel,rb  =4cm
+  distance per encoder gap = (2*pi*rb)/20 =1.1cm
+  distance for a given angle = angle*((2*pi*rb)/360)
+  ticks for given angle = angle*((2*pi*rb*1.1)/360) = angle *0.077
+  */
+
+  float ticks = angle*0.077;
+  Serial.print("Angle to distance:");
+  Serial.println(round(ticks));
+  return (int(round(ticks)));
 }
