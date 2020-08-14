@@ -9,13 +9,20 @@ import pickle
 import serial
 import time
 import cv2
-
+import VL53L1X
 
 #main calss for facial recognition for alphabot
 class alphabotFaceRecognition:
 
     def __init__(self,lock, person):
         print("[INFO] loading encodings + face detector...")
+        #initializing distance sensor
+        self.UPDATE_TIME_MICROS = 66000
+        self.INTER_MEASUREMENT_PERIOD_MILLIS = 70
+        self.tof = VL53L1X.VL53L1X(i2c_bus=1, i2c_address=0x29)
+        self.tof.open()
+        self.tof.set_timing(self.UPDATE_TIME_MICROS, self.INTER_MEASUREMENT_PERIOD_MILLIS)
+        self.tof.start_ranging(0)
         #classifer location of haarcascade
         classifierXML = 'haarcascade_frontalface_default.xml'
         self.detector = cv2.CascadeClassifier(classifierXML)
@@ -38,8 +45,10 @@ class alphabotFaceRecognition:
         self.arduinoComnd = {'stop'     :'{"Car":"Stop"}',
                             'forward'   :'{"Car":"Forward"}',
                             'backward'  :'{"Car":"Backward"}',
-                            'turnleft'  :'{"Car":"Left","Value":[',
-                            'turnright' :'{"Car":"Right","Value":['
+                            'turnleft_deg'  :'{"Car":"Left","Value":[',
+                            'turnright_deg' :'{"Car":"Right","Value":[',
+                            'turnLeft'  :'{"Car":"Left"}',
+                            'turnRight' :'{"Car":"Right"}'
                         }
         
 
@@ -93,15 +102,14 @@ class alphabotFaceRecognition:
             if self.targetPerson not in self.currentPerson:
                 self.scanForPerson()
             
-            '''
+            
             # display the image to our screen
-            cv2.imshow("Frame", self.frame)
+            #cv2.imshow("Frame", self.frame)
             key = cv2.waitKey(1) & 0xFF
-
+            
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
                 break
-            '''
         cv2.destroyAllWindows()
 
 
@@ -173,7 +181,7 @@ class alphabotFaceRecognition:
         else:
             self.servoProperties['servoBaseVal'] = self.servoProperties.get('servoBaseVal') - 3 
 
-        time.sleep(1)
+        time.sleep(0.5)
 
     #this function runs only initially to set the servo at good position
     def initialServoSetup(self):
@@ -194,24 +202,116 @@ class alphabotFaceRecognition:
                     
                     turnAngle = (abs(servoPostion - 90))# deviding the value by 10 now need to adjust
                     print ('trying to turn with angle :', turnAngle)
-                    if servoPostion < 90:
-                        serialCommand = self.arduinoComnd.get('turnleft')+ str(turnAngle) +']}'
-                        self.serialComm.write(bytes(serialCommand.encode("ascii")))
-                    else:
-                        serialCommand = self.arduinoComnd.get('turnright')+ str(turnAngle) +']}'
-                        self.serialComm.write(bytes(serialCommand.encode("ascii")))
+                    #if servoPostion < 90:
+                        #serialCommand = self.arduinoComnd.get('turnleft')+ str(turnAngle) +']}'
+                        #SerialCommand = self.arduinoComnd.get('')
+                        #self.serialComm.write(bytes(serialCommand.encode("ascii")))
+                    #else:
+                        #serialCommand = self.arduinoComnd.get('turnright')+ str(turnAngle) +']}'
+                        #self.serialComm.write(bytes(serialCommand.encode("ascii")))
                     
                     self.servoProperties['servoBaseVal'] = 90
                     servoBase = '{"Servo":"Servo1","Angle":'+str(self.servoProperties.get('servoBaseVal'))+'}'
                     #print ('sending speed value: ',servoBase)
-                    self.serialComm.write(bytes(servoBase.encode("ascii"))) 
+                    #self.serialComm.write(bytes(servoBase.encode("ascii"))) 
                 #drive forward if the person is found 
+    def driveAround(self):
+        # flag toi keep tarck of direction
+        stopFlag = False
+        #defines for state
+        forward = 1        
+        stop = 2
+        left = 3
+        right = 4
+        #distance to stop in mm
+        distToStop = 500 
+        # setting current state to move forward
+        curState = forward 
+        currentDistance = 0
+        #making sure that speed it set might not be necessary
+        for i in range(4):
+            self.driveSetSpeed(150)
+            time.sleep(0.3)
+        #main loop for driving
+        while 1:
+            #checking distance for negetive value
+            tempDistance  = self.tof.get_distance()
+            if tempDistance >0:
+                currentDistance = tempDistance
+
+            if currentDistance > distToStop and curState == forward:
+                self.driveForward()
+                #forward = True
+                #stop = False
+                #print ("continue driving, distance :",currentDistance)
+            elif currentDistance <= distToStop and stopFlag == False:
+                self.driveStop()
+                curState = left
+                #forward = False
+                stopFlag = True
+                #print('stopped,distance is :',currentDistance)
+            elif currentDistance <= distToStop and curState == left:
+                self.driveLeft()
+                curState = forward
+                stopFlag = False 
+            else:
+                curState = forward
+                stopFlag = False
+                print('unknown state :', stopFlag, curState,currentDistance)
+            key = cv2.waitKey(1) & 0xFF
+            print("current state :",curState," current distance :", currentDistance)
+            # if the `q` key was pressed, break from the loop
+            if key == ord("q"):
+                break
+            time.sleep(self.INTER_MEASUREMENT_PERIOD_MILLIS / 1000.0) 
+        print('exiting programm')
+        self.driveStop()
+        self.vs.release()
+        cv2.destroyAllWindows()
+        
+
+
+    #function to move forward
+    def driveForward(self):
+        serialCmnd = self.arduinoComnd.get('forward')
+        self.serialComm.write(bytes(serialCmnd.encode('ascii')))
+
+    #function to drive backward
+    def driveBackward(self):
+        serialCmnd = self.arduinoComnd.get('backward')
+        self.serialComm.write(bytes(serialCmnd.encode('ascii')))
+
+    #function to stop the robot
+    def driveStop(self):
+        serialCmnd = self.arduinoComnd.get('stop')
+        self.serialComm.write(bytes(serialCmnd.encode('ascii')))
+   
+    #function to turn left
+    def driveLeft(self):
+        serialCmnd = self.arduinoComnd.get('turnLeft')
+        self.serialComm.write(bytes(serialCmnd.encode('ascii')))
+        time.sleep(0.9)
+        self.driveStop()
+
+    #function to turn left
+    def driveRight(self):
+        serialCmnd = self.arduinoComnd.get('turnRight')
+        self.serialComm.write(bytes(serialCmnd.encode('ascii')))
+        time.sleep(0.1)
+        self.driveStop()
+
+    #function to set speed
+    def driveSetSpeed(self, speed):
+        #templet speed command == {"Car":"SetSpeed","Value":[250,200]}
+        speedVal = '{"Car":"SetSpeed","Value":[' + str(speed) +','+ str(speed) + ']}'
+        self.serialComm.write(bytes(speedVal.encode('ascii')))
+
+
 
 
     
 
 
-'''
 
 # create an empty face for the image
 
@@ -219,14 +319,13 @@ lock = threading.Lock()
 namesss = 'golam'
 runIt = alphabotFaceRecognition(lock,namesss)
 time.sleep(0.2)
+#runIt.imageProcessMain()
+print('starting proscess for imageProcess')
 imageProcess 	= threading.Thread(target=runIt.imageProcessMain,daemon=True)
-#imageProcess.start()
-#scanPerson		= threading.Thread(target=runIt.scanForPerson,daemon=True)
-#scanPerson.start()
-#driveToPerson   = threading.Thread(target=runIt.driveToPerson,daemon=True)
-#driveToPerson.start()
-'''
-
-
-
-
+imageProcess.start()
+print('staing driveAround process')
+drive = threading.Thread(target=runIt.driveAround,daemon=True)
+drive.start()
+while True:
+    time.sleep(0.5)
+    #print('going infinie')
